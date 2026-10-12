@@ -8,7 +8,7 @@ from aiogram.filters import CommandStart
 
 # ==================== НАСТРОЙКИ ====================
 BOT_TOKEN = "8956162380:AAERUhuI8Yy69hiJX6x5rHjuW4wpR0Ngoo8"
-ADMIN_ID = 5499124395
+ADMIN_IDS = {5499124395, 6721927946, 6748945363, 8180378659}  # ID всех админов
 CHANNEL_ID = "@tihinagimnazii3"
 DB_FILE = "pending.db"
 # ====================================================
@@ -61,19 +61,19 @@ async def cmd_start(message: Message):
     )
 
 
-@dp.message(F.chat.type == "private", ~F.from_user.id.in_({ADMIN_ID}))
+@dp.message(F.chat.type == "private", ~F.from_user.id.in_(ADMIN_IDS))
 async def handle_user_message(message: Message):
-    """Получаем сообщение — отправляем копию админу на модерацию"""
+    """Получаем сообщение — отправляем копию всем админам на модерацию"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="✅ Опубликовать", callback_data="approve"),
         InlineKeyboardButton(text="❌ Отклонить",   callback_data="reject"),
     ]])
 
-    # Отправляем копию (без имени отправителя!) админу
-    sent = await message.copy_to(chat_id=ADMIN_ID, reply_markup=keyboard)
-
-    # Сохраняем в БД: по ID сообщения у админа находим оригинал
-    db_save(sent.message_id, message.chat.id, message.message_id)
+    # Отправляем копию каждому админу
+    for admin_id in ADMIN_IDS:
+        sent = await message.copy_to(chat_id=admin_id, reply_markup=keyboard)
+        # Сохраняем в БД: по ID сообщения у каждого админа находим оригинал
+        db_save(sent.message_id, message.chat.id, message.message_id)
 
     await message.answer("✅ Сообщение отправлено на проверку!")
 
